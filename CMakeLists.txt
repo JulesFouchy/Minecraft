@@ -56,7 +56,7 @@ else()
 endif()
 
 # WebGPU (Must be after GLFW, otherwise Dawn uses its own version of glfw)
-set(WEBGPU_BACKEND "DAWN" CACHE STRING "" FORCE)
+set(WEBGPU_BACKEND "DAWN" CACHE STRING "")
 add_subdirectory(lib/WebGPU-distribution)
 target_link_libraries(${PROJECT_NAME} PRIVATE webgpu)
 target_copy_webgpu_binaries(${PROJECT_NAME})
