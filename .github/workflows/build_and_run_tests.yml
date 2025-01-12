@@ -15,20 +15,20 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-run-tests:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up Rust
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
 
-      - name: Cache Cargo Dependencies
+      - name: Cache cargo dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cargo/registry
@@ -36,7 +36,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
 
-      - name: Cache Cargo Build Artifacts
+      - name: Cache cargo build artifacts
         uses: actions/cache@v3
         with:
           path: target
@@ -44,13 +44,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-target-
 
-      - name: Install Dependencies
-        run: cargo fetch
-
-      - name: Build Project
+      - name: Build
         env:
           RUSTFLAGS: "-D warnings"
         run: cargo build
 
-      - name: Run Tests
+      - name: Run tests
         run: cargo test
