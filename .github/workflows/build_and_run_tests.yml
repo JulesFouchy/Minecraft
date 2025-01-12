@@ -1,4 +1,4 @@
-name: Rust Build
+name: Build and run tests
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
         run: cargo fetch
 
       - name: Build Project
-        run: cargo build --verbose
+        run: cargo build --verbose --deny warnings
 
       - name: Run Tests
         run: cargo test --verbose
