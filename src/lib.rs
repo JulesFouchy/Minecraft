@@ -322,8 +322,6 @@ pub async fn run() {
                 Some(())
             })
             .expect("Couldn't append canvas to document body.");
-
-        let _ = window.request_inner_size(PhysicalSize::new(850, 400));
     }
 
     // State::new uses async code, so we're going to wait for it to finish
