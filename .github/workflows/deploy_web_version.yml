@@ -60,19 +60,17 @@ jobs:
       - name: Build
         run: wasm-pack build --target web --release
 
-      - name: Copy index.html to output dir
-        run: cp ./src-web/index.html ./pkg/index.html
-
-      - name: BOB
-        run: ls ./pkg
-
-      - name: Build static website (optional)
+        # There seems to be a bug in peaceiris/actions-gh-pages that fails to publish the directory if it is called pkg, so we rename it as tmp_output
+      - name: Create output dir
         run: |
-          mkdir -p ./pkg
-          cp -R ./pkg/* ./static/
+          mkdir ./tmp_output
+          cp -R ./pkg/* ./tmp_output/
+
+      - name: Copy index.html to output dir
+        run: cp ./src-web/index.html ./tmp_output/index.html
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./static # Directory to publish (change this if needed)
+          publish_dir: ./tmp_output
