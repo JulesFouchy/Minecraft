@@ -1,3 +1,8 @@
+# Minecraft
+[Test it online!](https://julesfouchy.github.io/Minecraft/)
+
+## Dev
+
 Following WebGPU tutorial from https://sotrh.github.io/learn-wgpu/
 
 ## Install tools
