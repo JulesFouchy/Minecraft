@@ -3,8 +3,10 @@ import socketserver
 import os
 from pathlib import Path
 import webbrowser
+import shutil
 
 os.system("wasm-pack build --target web")
+shutil.copy("src-web/index.html", "pkg/index.html")
 
 
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -17,9 +19,14 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 # Configure the server
 PORT = 8000
-Handler = CustomHTTPRequestHandler
+DIR = Path(__file__).parent / "pkg"  # Ensure this points to your 'pkg' directory
 
+import os
+
+os.chdir(DIR)
+
+# Set up the server with the custom handler
+Handler = CustomHTTPRequestHandler
 with socketserver.TCPServer(("", PORT), Handler) as httpd:
-    print(f"Serving at http://localhost:{PORT}")
-    webbrowser.open(f"http://localhost:{PORT}")
+    print(f"Serving {DIR} at http://localhost:{PORT}")
     httpd.serve_forever()

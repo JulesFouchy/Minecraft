@@ -60,6 +60,9 @@ jobs:
       - name: Build
         run: wasm-pack build --target web --release
 
+      - name: Copy index.html to output dir
+        run: cp ./src-web/index.html ./pkg/index.html
+
       - name: BOB
         run: ls ./pkg
 
