@@ -1,5 +1,3 @@
-use minecraft::run;
-
 fn main() {
-    pollster::block_on(run());
+    pollster::block_on(minecraft::run());
 }

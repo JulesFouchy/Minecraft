@@ -1,4 +1,4 @@
-use super::WebgpuContext;
+use super::Context;
 use wgpu::util::DeviceExt;
 
 #[repr(C)]
@@ -30,7 +30,7 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(ctx: &WebgpuContext, vertices: &[Vertex], indices: &[u16]) -> Self {
+    pub fn new(ctx: &Context, vertices: &[Vertex], indices: &[u16]) -> Self {
         let vertex_buffer = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
