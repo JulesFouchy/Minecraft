@@ -21,10 +21,21 @@ jobs:
           toolchain: stable
           override: true
 
+      # Cache wasm-pack installation
+      - name: Cache wasm-pack installation
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/bin/wasm-pack
+          key: ${{ runner.os }}-wasm-pack-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-wasm-pack-
+
+      # Install wasm-pack if not cached
       - name: Install wasm-pack
         run: |
-          rustup target add wasm32-unknown-unknown
-          cargo install wasm-pack
+          if [ ! -f ~/.cargo/bin/wasm-pack ]; then
+            cargo install wasm-pack  # Install wasm-pack via cargo if not cached
+          fi
 
       - name: Cache Cargo Dependencies
         uses: actions/cache@v3
