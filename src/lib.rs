@@ -34,7 +34,7 @@ impl Vertex {
 const VERTICES: &[Vertex] = &[
     Vertex {
         position: [-0.0868241, 0.49240386, 0.0],
-        color: [0.5, 0.0, 0.5],
+        color: [1., 0.0, 0.5],
     }, // A
     Vertex {
         position: [-0.49513406, 0.06958647, 0.0],
