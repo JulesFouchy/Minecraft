@@ -18,7 +18,7 @@ struct Vertex {
     color: [f32; 3],
 }
 impl Vertex {
-    const ATTRIBS: [wgpu::VertexAttribute; 2] =
+    const ATTRIBUTES: [wgpu::VertexAttribute; 2] =
         wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x3];
 
     fn desc() -> wgpu::VertexBufferLayout<'static> {
@@ -27,14 +27,14 @@ impl Vertex {
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<Self>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &Self::ATTRIBS,
+            attributes: &Self::ATTRIBUTES,
         }
     }
 }
 const VERTICES: &[Vertex] = &[
     Vertex {
         position: [-0.0868241, 0.49240386, 0.0],
-        color: [1., 0.0, 0.5],
+        color: [1., 1.0, 0.5],
     }, // A
     Vertex {
         position: [-0.49513406, 0.06958647, 0.0],
@@ -122,7 +122,7 @@ impl<'a> State<'a> {
 
         let surface_caps = surface.get_capabilities(&adapter);
         // Shader code in this tutorial assumes an Srgb surface texture. Using a different
-        // one will result all the colors comming out darker. If you want to support non
+        // one will result all the colors coming out darker. If you want to support non
         // Srgb surfaces, you'll need to account for that when drawing to the frame.
         let surface_format = surface_caps
             .formats
@@ -164,14 +164,14 @@ impl<'a> State<'a> {
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: "vs_main", // 1.
+                entry_point: Some("vs_main"),
                 buffers: &[Vertex::desc()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
                 // 3.
                 module: &shader,
-                entry_point: "fs_main",
+                entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     // 4.
                     format: config.format,
@@ -216,7 +216,7 @@ impl<'a> State<'a> {
     }
 
     fn window(&self) -> &Window {
-        &self.window
+        self.window
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
