@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - ".github/workflows/build_and_run_tests.yml"
       - "Cargo.toml"
       - "Cargo.lock"
       - "src/**"
