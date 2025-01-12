@@ -294,7 +294,7 @@ pub async fn run() {
     let event_loop = EventLoop::new().unwrap();
     let window = WindowBuilder::new()
         .with_title("Minecraft version du turfu")
-        .with_fullscreen(Some(Fullscreen::Borderless(None)))
+        // .with_fullscreen(Some(Fullscreen::Borderless(None)))
         .build(&event_loop)
         .unwrap();
 
@@ -306,7 +306,15 @@ pub async fn run() {
 
         use winit::platform::web::WindowExtWebSys;
         web_sys::window()
-            .and_then(|win| win.document())
+            .and_then(|win| {
+                let width = win.inner_width().unwrap().as_f64().unwrap() as u32;
+                let height = win.inner_height().unwrap().as_f64().unwrap() as u32;
+                let factor = window.scale_factor();
+                let logical = winit::dpi::LogicalSize { width, height };
+                let PhysicalSize { width, height }: PhysicalSize<u32> = logical.to_physical(factor);
+                window.request_inner_size(PhysicalSize::new(width, height));
+                win.document()
+            })
             .and_then(|doc| {
                 let dst = doc.get_element_by_id("minecraft")?;
                 let canvas = web_sys::Element::from(window.canvas()?);
