@@ -66,8 +66,13 @@ jobs:
       - name: BOB
         run: ls ./pkg
 
+      - name: Build static website (optional)
+        run: |
+          mkdir -p ./pkg
+          cp -R ./pkg/* ./static/
+
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./pkg
+          publish_dir: ./static # Directory to publish (change this if needed)
