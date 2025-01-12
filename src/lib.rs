@@ -5,7 +5,7 @@ use winit::{
     event::*,
     event_loop::EventLoop,
     keyboard::{KeyCode, PhysicalKey},
-    window::{Window, WindowBuilder},
+    window::{Fullscreen, Window, WindowBuilder},
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -294,6 +294,7 @@ pub async fn run() {
     let event_loop = EventLoop::new().unwrap();
     let window = WindowBuilder::new()
         .with_title("Minecraft version du turfu")
+        .with_fullscreen(Some(Fullscreen::Borderless(None)))
         .build(&event_loop)
         .unwrap();
 
@@ -329,20 +330,9 @@ pub async fn run() {
                     window_id,
                 } if window_id == state.window().id() => {
                     if !state.input(event) {
-                        // UPDATED!
                         match event {
-                            WindowEvent::CloseRequested
-                            | WindowEvent::KeyboardInput {
-                                event:
-                                    KeyEvent {
-                                        state: ElementState::Pressed,
-                                        physical_key: PhysicalKey::Code(KeyCode::Escape),
-                                        ..
-                                    },
-                                ..
-                            } => control_flow.exit(),
+                            WindowEvent::CloseRequested => control_flow.exit(),
                             WindowEvent::Resized(physical_size) => {
-                                log::info!("physical_size: {physical_size:?}");
                                 surface_configured = true;
                                 state.resize(*physical_size);
                             }
