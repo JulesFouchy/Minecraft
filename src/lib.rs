@@ -4,8 +4,7 @@ use wgpu::util::DeviceExt;
 use winit::{
     event::*,
     event_loop::EventLoop,
-    keyboard::{KeyCode, PhysicalKey},
-    window::{Fullscreen, Window, WindowBuilder},
+    window::{Window, WindowBuilder},
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -53,6 +52,28 @@ const VERTICES: &[Vertex] = &[
         color: [0.5, 0.0, 0.5],
     }, // E
 ];
+const VERTICES2: &[Vertex] = &[
+    Vertex {
+        position: [-0.0868241, 1. + 0.49240386, 0.0],
+        color: [1., 1.0, 0.5],
+    }, // A
+    Vertex {
+        position: [-0.49513406, 1. + 0.06958647, 0.0],
+        color: [0.5, 0.0, 0.5],
+    }, // B
+    Vertex {
+        position: [-0.21918549, 1. + -0.44939706, 0.0],
+        color: [0.5, 0.0, 0.5],
+    }, // C
+    Vertex {
+        position: [0.35966998, 1. + -0.3473291, 0.0],
+        color: [0.5, 0.0, 0.5],
+    }, // D
+    Vertex {
+        position: [0.44147372, 1. + 0.2347359, 0.0],
+        color: [0.5, 0.0, 0.5],
+    }, // E
+];
 
 const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 
@@ -69,7 +90,7 @@ impl Model {
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
+                contents: bytemuck::cast_slice(vertices),
                 usage: wgpu::BufferUsages::VERTEX,
             });
         let index_buffer = ctx
@@ -166,16 +187,19 @@ struct WebgpuContext<'a> {
 struct App<'a> {
     webgpu_context: WebgpuContext<'a>,
     cube_model: Model,
+    cube_model2: Model,
 }
 
 impl<'a> App<'a> {
     async fn new(window: &'a Window) -> Self {
         let webgpu_context = WebgpuContext::new(window).await;
-        let cube_model = Model::new(&webgpu_context, &VERTICES, &INDICES);
+        let cube_model = Model::new(&webgpu_context, VERTICES, INDICES);
+        let cube_model2 = Model::new(&webgpu_context, VERTICES2, INDICES);
 
         App {
             webgpu_context,
             cube_model,
+            cube_model2,
         }
     }
 
@@ -214,7 +238,8 @@ impl<'a> App<'a> {
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });
-            // self.cube_model.render(render_pass);
+            self.cube_model.render(&mut render_pass);
+            self.cube_model2.render(&mut render_pass);
         }
 
         self.webgpu_context
