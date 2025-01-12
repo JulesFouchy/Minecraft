@@ -1,4 +1,6 @@
 pub mod model;
+pub mod run_app;
+pub mod texture;
 use std::iter;
 
 use winit::{event::WindowEvent, window::Window};
@@ -14,6 +16,7 @@ pub struct WebgpuContext<'a> {
     // unsafe references to the window's resources.
     window: &'a Window,
 }
+
 impl<'a> WebgpuContext<'a> {
     pub async fn new(window: &'a Window) -> Self {
         let size = window.inner_size();
