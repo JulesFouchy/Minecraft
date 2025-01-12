@@ -293,7 +293,7 @@ pub async fn run() {
 
     let event_loop = EventLoop::new().unwrap();
     let window = WindowBuilder::new()
-        .with_title("Minecraft")
+        .with_title("Minecraft version du turfu")
         .build(&event_loop)
         .unwrap();
 
