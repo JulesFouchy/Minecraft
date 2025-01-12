@@ -1,4 +1,4 @@
-name: Deploy Web Version
+name: Deploy web version
 
 on:
   push:
@@ -12,20 +12,19 @@ on:
       - "!**/*.md"
 
 jobs:
-  build-and-deploy:
+  deploy-web-version:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Rust
+      - name: Install rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
 
-      # Cache wasm-pack installation
       - name: Cache wasm-pack installation
         uses: actions/cache@v3
         with:
@@ -34,14 +33,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-wasm-pack-
 
-      # Install wasm-pack if not cached
       - name: Install wasm-pack
         run: |
           if [ ! -f ~/.cargo/bin/wasm-pack ]; then
-            cargo install wasm-pack  # Install wasm-pack via cargo if not cached
+            cargo install wasm-pack
           fi
 
-      - name: Cache Cargo Dependencies
+      - name: Cache cargo dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cargo/registry
@@ -57,7 +55,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-wasm-pkg-
 
-      - name: Build Web Version
+      - name: Build
         run: wasm-pack build --target web --release
 
       - name: Deploy to GitHub Pages
