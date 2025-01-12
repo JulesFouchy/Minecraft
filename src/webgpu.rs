@@ -1,5 +1,9 @@
-pub mod model;
+pub mod mesh;
+pub use crate::webgpu::mesh::*;
 pub mod texture;
+pub use crate::webgpu::texture::*;
+pub mod renderer;
+pub use crate::webgpu::renderer::*;
 
 use std::iter;
 #[cfg(target_arch = "wasm32")]
