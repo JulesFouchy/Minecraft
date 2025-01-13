@@ -6,8 +6,6 @@ pub mod renderer;
 pub use crate::webgpu::renderer::*;
 
 use std::iter;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
 use winit::{event::*, event_loop::EventLoop, window::Window, window::WindowBuilder};
 
 pub trait App {
