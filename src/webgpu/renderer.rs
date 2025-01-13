@@ -1,4 +1,6 @@
 use super::*;
+use crate::camera::Camera;
+use wgpu::util::DeviceExt;
 
 const VERTICES: &[Vertex] = &[
     Vertex {
@@ -47,16 +49,41 @@ const VERTICES2: &[Vertex] = &[
 
 const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 
+// We need this for Rust to store our data correctly for the shaders
+#[repr(C)]
+// This is so we can store this in a buffer
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+struct CameraUniform {
+    // We can't use cgmath with bytemuck directly, so we'll have
+    // to convert the Matrix4 into a 4x4 f32 array
+    view_proj: [[f32; 4]; 4],
+}
+
+impl CameraUniform {
+    fn new() -> Self {
+        use cgmath::SquareMatrix;
+        Self {
+            view_proj: cgmath::Matrix4::identity().into(),
+        }
+    }
+
+    fn update_view_proj(&mut self, camera: &Camera) {
+        self.view_proj = camera.build_view_projection_matrix().into();
+    }
+}
+
 pub struct Renderer {
     render_pipeline: wgpu::RenderPipeline,
     cube_mesh: Mesh,
     cube_mesh2: Mesh,
     diffuse_texture: Texture,
-    bind_group: wgpu::BindGroup,
+    texture_bind_group: wgpu::BindGroup,
+    camera_buffer: wgpu::Buffer,
+    camera_bind_group: wgpu::BindGroup,
 }
 
 impl Renderer {
-    pub fn new(ctx: &Context) -> Self {
+    pub fn new(ctx: &Context, camera: &Camera) -> Self {
         let cube_model = Mesh::new(ctx, VERTICES, INDICES);
         let cube_model2 = Mesh::new(ctx, VERTICES2, INDICES);
         let diffuse_texture = texture::Texture::from_bytes(
@@ -70,7 +97,7 @@ impl Renderer {
             .device
             .create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
 
-        let bind_group_layout =
+        let texture_bind_group_layout =
             ctx.device
                 .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                     entries: &[
@@ -97,7 +124,7 @@ impl Renderer {
                 });
 
         let bind_group = ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &bind_group_layout,
+            layout: &texture_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
@@ -111,11 +138,47 @@ impl Renderer {
             label: Some("diffuse_bind_group"),
         });
 
+        let mut camera_uniform = CameraUniform::new();
+        camera_uniform.update_view_proj(&camera);
+
+        let camera_buffer = ctx
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Camera Buffer"),
+                contents: bytemuck::cast_slice(&[camera_uniform]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
+
+        let camera_bind_group_layout =
+            ctx.device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    entries: &[wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::VERTEX,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    }],
+                    label: Some("camera_bind_group_layout"),
+                });
+
+        let camera_bind_group = ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &camera_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: camera_buffer.as_entire_binding(),
+            }],
+            label: Some("camera_bind_group"),
+        });
+
         let render_pipeline_layout =
             ctx.device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
-                    bind_group_layouts: &[&bind_group_layout],
+                    bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout],
                     push_constant_ranges: &[],
                 });
 
@@ -169,7 +232,9 @@ impl Renderer {
             cube_mesh2: cube_model2,
             diffuse_texture,
             render_pipeline,
-            bind_group,
+            texture_bind_group: bind_group,
+            camera_buffer,
+            camera_bind_group,
         }
     }
 
@@ -195,7 +260,8 @@ impl Renderer {
         });
 
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_bind_group(0, &self.bind_group, &[]);
+        render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
+        render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
 
         self.cube_mesh.draw(&mut render_pass);
         self.cube_mesh2.draw(&mut render_pass);

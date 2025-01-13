@@ -29,6 +29,13 @@ pub struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
+    pub fn width_f32(&self) -> f32 {
+        self.size.width as f32
+    }
+    pub fn height_f32(&self) -> f32 {
+        self.size.height as f32
+    }
+
     pub async fn new(window: &'a Window) -> Self {
         let size = window.inner_size();
 

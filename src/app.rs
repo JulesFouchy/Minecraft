@@ -1,14 +1,30 @@
+use crate::camera::Camera;
 use crate::webgpu;
 
 pub struct App {
     renderer: webgpu::Renderer,
+    camera: Camera,
 }
 
 impl webgpu::App for App {
     fn new(ctx: &webgpu::Context) -> Self {
-        App {
-            renderer: webgpu::Renderer::new(ctx),
-        }
+        let camera = Camera {
+            // position the camera 1 unit up and 2 units back
+            // +z is out of the screen
+            eye: (0.0, 1.0, 2.0).into(),
+            // have it look at the origin
+            target: (0.0, 0.0, 0.0).into(),
+            // which way is "up"
+            up: cgmath::Vector3::unit_y(),
+            aspect: ctx.width_f32() / ctx.height_f32(),
+            fov_y: 45.0,
+            z_near: 0.1,
+            z_far: 100.0,
+        };
+
+        let renderer = webgpu::Renderer::new(ctx, &camera);
+
+        App { renderer, camera }
     }
 
     fn update(&mut self) {}
