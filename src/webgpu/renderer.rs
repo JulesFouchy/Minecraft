@@ -52,22 +52,70 @@ pub struct Renderer {
     cube_mesh: Mesh,
     cube_mesh2: Mesh,
     diffuse_texture: Texture,
+    bind_group: wgpu::BindGroup,
 }
 
 impl Renderer {
     pub fn new(ctx: &Context) -> Self {
         let cube_model = Mesh::new(ctx, VERTICES, INDICES);
         let cube_model2 = Mesh::new(ctx, VERTICES2, INDICES);
-        let diffuse_texture = Texture::new(ctx);
+        let diffuse_texture = texture::Texture::from_bytes(
+            ctx,
+            include_bytes!("happy-tree.png"),
+            Some("happy-tree.png"),
+        )
+        .unwrap();
 
         let shader = ctx
             .device
             .create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+
+        let bind_group_layout =
+            ctx.device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            ty: wgpu::BindingType::Texture {
+                                multisampled: false,
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                                sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            // This should match the filterable field of the
+                            // corresponding Texture entry above.
+                            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                            count: None,
+                        },
+                    ],
+                    label: Some("texture_bind_group_layout"),
+                });
+
+        let bind_group = ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
+                },
+            ],
+            label: Some("diffuse_bind_group"),
+        });
+
         let render_pipeline_layout =
             ctx.device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
-                    bind_group_layouts: &[&diffuse_texture.bind_group_layout],
+                    bind_group_layouts: &[&bind_group_layout],
                     push_constant_ranges: &[],
                 });
 
@@ -121,6 +169,7 @@ impl Renderer {
             cube_mesh2: cube_model2,
             diffuse_texture,
             render_pipeline,
+            bind_group,
         }
     }
 
@@ -146,7 +195,7 @@ impl Renderer {
         });
 
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_bind_group(0, &self.diffuse_texture.bind_group, &[]);
+        render_pass.set_bind_group(0, &self.bind_group, &[]);
 
         self.cube_mesh.draw(&mut render_pass);
         self.cube_mesh2.draw(&mut render_pass);
