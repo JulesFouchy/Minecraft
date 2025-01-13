@@ -12,8 +12,9 @@ use winit::{event::*, event_loop::EventLoop, window::Window, window::WindowBuild
 
 pub trait App {
     fn new(webgpu_context: &Context) -> Self;
-    fn update(&mut self);
+    fn update(&mut self, ctx: &Context);
     fn render(&mut self, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView);
+    fn input(&mut self, event: &WindowEvent);
 }
 
 pub struct Context<'a> {
@@ -161,11 +162,6 @@ impl<'a> Context<'a> {
             self.surface.configure(&self.device, &self.config);
         }
     }
-
-    #[allow(unused_variables)]
-    pub fn input(&mut self, event: &WindowEvent) -> bool {
-        false
-    }
 }
 
 pub async fn run<AppT>()
@@ -226,28 +222,26 @@ where
                     ref event,
                     window_id,
                 } if window_id == webgpu_context.window().id() => {
-                    if !webgpu_context.input(event) {
-                        match event {
-                            WindowEvent::CloseRequested => control_flow.exit(),
-                            WindowEvent::Resized(physical_size) => {
-                                surface_configured = true;
-                                webgpu_context.resize(*physical_size);
-                            }
-                            WindowEvent::RedrawRequested => {
-                                // This tells winit that we want another frame after this one
-                                webgpu_context.window().request_redraw();
-
-                                if !surface_configured {
-                                    return;
-                                }
-
-                                app.update();
-                                webgpu_context.render(|context, view| {
-                                    app.render(context, view);
-                                });
-                            }
-                            _ => {}
+                    match event {
+                        WindowEvent::CloseRequested => control_flow.exit(),
+                        WindowEvent::Resized(physical_size) => {
+                            surface_configured = true;
+                            webgpu_context.resize(*physical_size);
                         }
+                        WindowEvent::RedrawRequested => {
+                            // This tells winit that we want another frame after this one
+                            webgpu_context.window().request_redraw();
+
+                            if !surface_configured {
+                                return;
+                            }
+
+                            app.update(&webgpu_context);
+                            webgpu_context.render(|command_encoder, view| {
+                                app.render(command_encoder, view);
+                            });
+                        }
+                        _ => app.input(event),
                     }
                 }
                 _ => {}

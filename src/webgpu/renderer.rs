@@ -60,15 +60,10 @@ struct CameraUniform {
 }
 
 impl CameraUniform {
-    fn new() -> Self {
-        use cgmath::SquareMatrix;
+    fn new(camera: &Camera) -> Self {
         Self {
-            view_proj: cgmath::Matrix4::identity().into(),
+            view_proj: camera.build_view_projection_matrix().into(),
         }
-    }
-
-    fn update_view_proj(&mut self, camera: &Camera) {
-        self.view_proj = camera.build_view_projection_matrix().into();
     }
 }
 
@@ -138,8 +133,7 @@ impl Renderer {
             label: Some("diffuse_bind_group"),
         });
 
-        let mut camera_uniform = CameraUniform::new();
-        camera_uniform.update_view_proj(&camera);
+        let camera_uniform = CameraUniform::new(&camera);
 
         let camera_buffer = ctx
             .device
@@ -265,5 +259,14 @@ impl Renderer {
 
         self.cube_mesh.draw(&mut render_pass);
         self.cube_mesh2.draw(&mut render_pass);
+    }
+
+    pub fn set_camera(&self, ctx: &Context, camera: &Camera) {
+        let camera_uniform = CameraUniform::new(camera);
+        ctx.queue.write_buffer(
+            &self.camera_buffer,
+            0,
+            bytemuck::cast_slice(&[camera_uniform]),
+        );
     }
 }
