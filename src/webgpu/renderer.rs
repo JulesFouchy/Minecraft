@@ -1,5 +1,8 @@
 use super::*;
-use crate::camera::Camera;
+use crate::{
+    camera::Camera,
+    voxel::{Voxel, VoxelGrid},
+};
 use wgpu::util::DeviceExt;
 
 #[rustfmt::skip]
@@ -144,12 +147,17 @@ impl Renderer {
             label: Some("camera_bind_group"),
         });
 
+        let push_constant_range = wgpu::PushConstantRange {
+            stages: wgpu::ShaderStages::VERTEX, // Push constant used in the vertex stage
+            range: 0..4,
+        };
+
         let render_pipeline_layout =
             ctx.device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
                     bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout],
-                    push_constant_ranges: &[],
+                    push_constant_ranges: &[push_constant_range],
                 });
 
         let render_pipeline = ctx
@@ -207,7 +215,12 @@ impl Renderer {
         }
     }
 
-    pub fn render(&self, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
+    pub fn render(
+        &self,
+        encoder: &mut wgpu::CommandEncoder,
+        view: &wgpu::TextureView,
+        grid: &VoxelGrid,
+    ) {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -232,7 +245,14 @@ impl Renderer {
         render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
         render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
 
-        self.cube_mesh.draw(&mut render_pass);
+        grid.voxels.iter().for_each(|voxel: &Voxel| {
+            render_pass.set_push_constants(
+                wgpu::ShaderStages::VERTEX,
+                0,
+                bytemuck::cast_slice(&[voxel.position.z]),
+            );
+            self.cube_mesh.draw(&mut render_pass);
+        });
     }
 
     pub fn set_camera(&self, ctx: &Context, camera: &Camera) {

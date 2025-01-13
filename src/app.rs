@@ -1,13 +1,15 @@
-use winit::event::WindowEvent;
-
 use crate::camera::Camera;
 use crate::camera_controller::CameraController;
+use crate::voxel;
+use crate::voxel::{Voxel, VoxelGrid};
 use crate::webgpu;
+use winit::event::WindowEvent;
 
 pub struct App {
     renderer: webgpu::Renderer,
     camera: Camera,
     camera_controller: CameraController,
+    world: VoxelGrid,
 }
 
 impl webgpu::App for App {
@@ -29,10 +31,26 @@ impl webgpu::App for App {
 
         let renderer = webgpu::Renderer::new(ctx, &camera);
 
+        let voxels: Vec<Voxel> = vec![
+            Voxel {
+                position: (0, 0, 0).into(),
+                kind: voxel::Kind::Terrain,
+            },
+            Voxel {
+                position: (0, 0, 1).into(),
+                kind: voxel::Kind::Terrain,
+            },
+            Voxel {
+                position: (0, 0, 2).into(),
+                kind: voxel::Kind::Terrain,
+            },
+        ];
+
         App {
             renderer,
             camera,
             camera_controller,
+            world: VoxelGrid { voxels },
         }
     }
 
@@ -42,7 +60,7 @@ impl webgpu::App for App {
     }
 
     fn render(&mut self, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
-        self.renderer.render(encoder, view);
+        self.renderer.render(encoder, view, &self.world);
     }
 
     fn input(&mut self, event: &WindowEvent) {
