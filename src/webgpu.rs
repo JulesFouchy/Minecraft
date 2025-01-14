@@ -11,7 +11,12 @@ use winit::{event::*, event_loop::EventLoop, window::Window, window::WindowBuild
 pub trait App {
     fn new(webgpu_context: &Context) -> Self;
     fn update(&mut self, ctx: &Context);
-    fn render(&mut self, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView);
+    fn render(
+        &mut self,
+        encoder: &mut wgpu::CommandEncoder,
+        view: &wgpu::TextureView,
+        depth_texture_view: &wgpu::TextureView,
+    );
     fn input(&mut self, event: &WindowEvent);
 }
 
@@ -21,6 +26,7 @@ pub struct Context<'a> {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
+    depth_texture: Texture,
     // The window must be declared after the surface so
     // it gets dropped after it as the surface contains
     // unsafe references to the window's resources.
@@ -99,6 +105,7 @@ impl<'a> Context<'a> {
             desired_maximum_frame_latency: 2,
             view_formats: vec![],
         };
+        let depth_texture = Texture::create_depth_texture(&device, &config, "Depth Texture");
 
         Self {
             surface,
@@ -107,12 +114,13 @@ impl<'a> Context<'a> {
             config,
             size,
             window,
+            depth_texture,
         }
     }
 
     pub fn render<T>(&mut self, do_rendering: T)
     where
-        T: FnOnce(&mut wgpu::CommandEncoder, &wgpu::TextureView),
+        T: FnOnce(&mut wgpu::CommandEncoder, &wgpu::TextureView, &wgpu::TextureView),
     {
         match self.surface.get_current_texture() {
             Ok(output) => {
@@ -126,7 +134,7 @@ impl<'a> Context<'a> {
                             label: Some("Render Encoder"),
                         });
 
-                do_rendering(&mut encoder, &view);
+                do_rendering(&mut encoder, &view, &self.depth_texture.view);
 
                 self.queue.submit(iter::once(encoder.finish()));
                 output.present();
@@ -158,6 +166,8 @@ impl<'a> Context<'a> {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
+            self.depth_texture =
+                Texture::create_depth_texture(&self.device, &self.config, "Depth texture");
         }
     }
 }
@@ -235,8 +245,8 @@ where
                             }
 
                             app.update(&webgpu_context);
-                            webgpu_context.render(|command_encoder, view| {
-                                app.render(command_encoder, view);
+                            webgpu_context.render(|command_encoder, view, depth_texture_view| {
+                                app.render(command_encoder, view, depth_texture_view);
                             });
                         }
                         _ => app.input(event),

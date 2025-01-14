@@ -59,8 +59,14 @@ impl webgpu::App for App {
         self.renderer.set_camera(ctx, &self.camera);
     }
 
-    fn render(&mut self, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
-        self.renderer.render(encoder, view, &self.world);
+    fn render(
+        &mut self,
+        encoder: &mut wgpu::CommandEncoder,
+        view: &wgpu::TextureView,
+        depth_texture_view: &wgpu::TextureView,
+    ) {
+        self.renderer
+            .render(encoder, view, depth_texture_view, &self.world);
     }
 
     fn input(&mut self, event: &WindowEvent) {
