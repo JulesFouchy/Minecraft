@@ -1,18 +1,39 @@
-use anyhow::*;
-use fs_extra::copy_items;
-use fs_extra::dir::CopyOptions;
 use std::env;
+use std::fs;
+use std::path::Path;
 
-fn main() -> Result<()> {
-    // This tells Cargo to rerun this script if something in /res/ changes.
-    println!("cargo:rerun-if-changed=res/*");
+fn main() {
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let target_dir = Path::new(&out_dir)
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap();
 
-    let out_dir = env::var("OUT_DIR")?;
-    let mut copy_options = CopyOptions::new();
-    copy_options.overwrite = true;
-    let mut paths_to_copy = Vec::new();
-    paths_to_copy.push("res/");
-    copy_items(&paths_to_copy, out_dir, &copy_options)?;
+    let res_dir = "res"; // Path to your resource directory
+    let dest_dir = target_dir.join("res");
 
+    if dest_dir.exists() {
+        fs::remove_dir_all(&dest_dir).unwrap();
+    }
+
+    fs::create_dir_all(&dest_dir).unwrap();
+    copy_dir(res_dir, &dest_dir).unwrap();
+}
+
+fn copy_dir(from: &str, to: &std::path::Path) -> std::io::Result<()> {
+    for entry in fs::read_dir(from)? {
+        let entry = entry?;
+        let entry_path = entry.path();
+        let dest_path = to.join(entry.file_name());
+        if entry_path.is_dir() {
+            fs::create_dir_all(&dest_path)?;
+            copy_dir(&entry_path.to_string_lossy(), &dest_path)?;
+        } else {
+            fs::copy(entry_path, dest_path)?;
+        }
+    }
     Ok(())
 }

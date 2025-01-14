@@ -1,6 +1,7 @@
 mod app;
 mod camera;
 mod camera_controller;
+mod path;
 mod resources;
 mod voxel;
 mod webgpu;

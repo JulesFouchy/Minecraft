@@ -8,6 +8,7 @@ pub mod model;
 pub use crate::webgpu::model::*;
 
 use std::iter;
+use std::path::Path;
 use winit::{event::*, event_loop::EventLoop, window::Window, window::WindowBuilder};
 
 pub trait App {

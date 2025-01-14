@@ -1,6 +1,7 @@
 use super::*;
 use crate::{
     camera::Camera,
+    path::res_path,
     voxel::{Voxel, VoxelGrid},
 };
 use cgmath::prelude::*;
@@ -173,7 +174,7 @@ impl Renderer {
         // });
 
         let obj_model = crate::resources::load_model(
-            "C:/Dev/Rust/minecraft/res/cube/cube.obj",
+            &res_path(Path::new("cube/cube.obj")),
             &ctx.device,
             &ctx.queue,
             &texture_bind_group_layout,
