@@ -132,24 +132,24 @@ impl Renderer {
         let instances = vec![
             Instance {
                 position: cgmath::vec3(0., 0., 0.),
-                rotation: cgmath::Quaternion {
-                    v: cgmath::vec3(0., 0., 1.),
-                    s: 1.,
-                },
+                rotation: cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_z(),
+                    cgmath::Deg(180.0),
+                ),
             },
             Instance {
                 position: cgmath::vec3(0., 0., 1.),
-                rotation: cgmath::Quaternion {
-                    v: cgmath::vec3(0., 0., 1.),
-                    s: 2.,
-                },
+                rotation: cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_z(),
+                    cgmath::Deg(180.0),
+                ),
             },
             Instance {
                 position: cgmath::vec3(0., 0., 2.),
-                rotation: cgmath::Quaternion {
-                    v: cgmath::vec3(0., 0., 1.),
-                    s: 2.,
-                },
+                rotation: cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_z(),
+                    cgmath::Deg(180.),
+                ),
             },
         ];
         let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
