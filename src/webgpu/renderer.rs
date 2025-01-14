@@ -241,17 +241,12 @@ impl Renderer {
             label: Some("camera_bind_group"),
         });
 
-        let push_constant_range = wgpu::PushConstantRange {
-            stages: wgpu::ShaderStages::VERTEX, // Push constant used in the vertex stage
-            range: 0..4,
-        };
-
         let render_pipeline_layout =
             ctx.device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
                     bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout],
-                    push_constant_ranges: &[push_constant_range],
+                    push_constant_ranges: &[],
                 });
 
         let render_pipeline = ctx

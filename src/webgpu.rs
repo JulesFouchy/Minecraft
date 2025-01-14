@@ -63,16 +63,13 @@ impl<'a> Context<'a> {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    required_features: wgpu::Features::PUSH_CONSTANTS,
+                    required_features: wgpu::Features::empty(),
                     // WebGL doesn't support all of wgpu's features, so if
                     // we're building for the web we'll have to disable some.
                     required_limits: if cfg!(target_arch = "wasm32") {
                         wgpu::Limits::downlevel_webgl2_defaults()
                     } else {
-                        wgpu::Limits {
-                            max_push_constant_size: 4,
-                            ..wgpu::Limits::default()
-                        }
+                        wgpu::Limits::default()
                     },
                     memory_hints: Default::default(),
                 },
