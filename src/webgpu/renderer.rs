@@ -6,31 +6,6 @@ use crate::{
 use cgmath::prelude::*;
 use wgpu::util::DeviceExt;
 
-#[rustfmt::skip]
-const VERTICES: &[Vertex] = &[
-    // Front face
-    Vertex { position: [-0.5, -0.5,  0.5], uv: [0.0, 0.0] }, // 0
-    Vertex { position: [ 0.5, -0.5,  0.5], uv: [1.0, 0.0] }, // 1
-    Vertex { position: [ 0.5,  0.5,  0.5], uv: [1.0, 1.0] }, // 2
-    Vertex { position: [-0.5,  0.5,  0.5], uv: [0.0, 1.0] }, // 3
-
-    // Back face
-    Vertex { position: [-0.5, -0.5, -0.5], uv: [1.0, 0.0] }, // 4
-    Vertex { position: [ 0.5, -0.5, -0.5], uv: [0.0, 0.0] }, // 5
-    Vertex { position: [ 0.5,  0.5, -0.5], uv: [0.0, 1.0] }, // 6
-    Vertex { position: [-0.5,  0.5, -0.5], uv: [1.0, 1.0] }, // 7
-];
-
-#[rustfmt::skip]
-const INDICES: &[u16] = &[
-    0, 1, 2, 0, 2, 3, // Front face
-    4, 6, 5, 4, 7, 6, // Back face
-    4, 0, 3, 4, 3, 7, // Left face
-    1, 5, 6, 1, 6, 2, // Right face
-    3, 2, 6, 3, 6, 7, // Top face
-    4, 5, 1, 4, 1, 0, // Bottom face
-];
-
 // We need this for Rust to store our data correctly for the shaders
 #[repr(C)]
 // This is so we can store this in a buffer
@@ -111,9 +86,7 @@ impl InstanceRaw {
 
 pub struct Renderer {
     render_pipeline: wgpu::RenderPipeline,
-    cube_mesh: Mesh,
-    diffuse_texture: Texture,
-    texture_bind_group: wgpu::BindGroup,
+    obj_model: Model,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
     instances: Vec<Instance>,
@@ -121,14 +94,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new(ctx: &Context, camera: &Camera) -> Self {
-        let cube_model = Mesh::new(ctx, VERTICES, INDICES);
-        let diffuse_texture = texture::Texture::from_bytes(
-            ctx,
-            include_bytes!("happy-tree.png"),
-            Some("happy-tree.png"),
-        )
-        .unwrap();
+    pub async fn new(ctx: &Context<'_>, camera: &Camera) -> Self {
         let instances = vec![
             Instance {
                 position: cgmath::vec3(0., 0., 0.),
@@ -137,20 +103,20 @@ impl Renderer {
                     cgmath::Deg(180.0),
                 ),
             },
-            Instance {
-                position: cgmath::vec3(0., 0., 1.),
-                rotation: cgmath::Quaternion::from_axis_angle(
-                    cgmath::Vector3::unit_z(),
-                    cgmath::Deg(180.0),
-                ),
-            },
-            Instance {
-                position: cgmath::vec3(0., 0., 2.),
-                rotation: cgmath::Quaternion::from_axis_angle(
-                    cgmath::Vector3::unit_z(),
-                    cgmath::Deg(180.),
-                ),
-            },
+            // Instance {
+            //     position: cgmath::vec3(0., 0., 1.),
+            //     rotation: cgmath::Quaternion::from_axis_angle(
+            //         cgmath::Vector3::unit_z(),
+            //         cgmath::Deg(180.0),
+            //     ),
+            // },
+            // Instance {
+            //     position: cgmath::vec3(0., 0., 2.),
+            //     rotation: cgmath::Quaternion::from_axis_angle(
+            //         cgmath::Vector3::unit_z(),
+            //         cgmath::Deg(180.),
+            //     ),
+            // },
         ];
         let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
         let instance_buffer = ctx
@@ -191,20 +157,29 @@ impl Renderer {
                     label: Some("texture_bind_group_layout"),
                 });
 
-        let bind_group = ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
-                },
-            ],
-            label: Some("diffuse_bind_group"),
-        });
+        // let bind_group = ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        //     layout: &texture_bind_group_layout,
+        //     entries: &[
+        //         wgpu::BindGroupEntry {
+        //             binding: 0,
+        //             resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
+        //         },
+        //         wgpu::BindGroupEntry {
+        //             binding: 1,
+        //             resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
+        //         },
+        //     ],
+        //     label: Some("diffuse_bind_group"),
+        // });
+
+        let obj_model = crate::resources::load_model(
+            "C:/Dev/Rust/minecraft/res/cube/cube.obj",
+            &ctx.device,
+            &ctx.queue,
+            &texture_bind_group_layout,
+        )
+        .await
+        .unwrap();
 
         let camera_uniform = CameraUniform::new(&camera);
 
@@ -257,7 +232,7 @@ impl Renderer {
                 vertex: wgpu::VertexState {
                     module: &shader,
                     entry_point: Some("vs_main"),
-                    buffers: &[Vertex::desc(), InstanceRaw::desc()],
+                    buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
                     compilation_options: wgpu::PipelineCompilationOptions::default(),
                 },
                 fragment: Some(wgpu::FragmentState {
@@ -301,10 +276,8 @@ impl Renderer {
             });
 
         Self {
-            cube_mesh: cube_model,
-            diffuse_texture,
             render_pipeline,
-            texture_bind_group: bind_group,
+            obj_model,
             camera_buffer,
             camera_bind_group,
             instances,
@@ -335,7 +308,7 @@ impl Renderer {
                 },
             })],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                view: &depth_texture_view,
+                view: depth_texture_view,
                 depth_ops: Some(wgpu::Operations {
                     load: wgpu::LoadOp::Clear(1.0),
                     store: wgpu::StoreOp::Store,
@@ -346,19 +319,13 @@ impl Renderer {
             timestamp_writes: None,
         });
 
+        use model::DrawModel;
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
-        render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
-        render_pass.set_vertex_buffer(0, self.cube_mesh.vertex_buffer.slice(..));
         render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-        render_pass.set_index_buffer(
-            self.cube_mesh.index_buffer.slice(..),
-            wgpu::IndexFormat::Uint16,
-        );
-        render_pass.draw_indexed(
-            0..self.cube_mesh.num_indices,
-            0,
-            0..self.instances.len() as _,
+        render_pass.draw_model_instanced(
+            &self.obj_model,
+            0..self.instances.len() as u32,
+            &self.camera_bind_group,
         );
     }
 

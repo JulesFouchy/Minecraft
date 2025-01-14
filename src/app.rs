@@ -13,7 +13,7 @@ pub struct App {
 }
 
 impl webgpu::App for App {
-    fn new(ctx: &webgpu::Context) -> Self {
+    async fn new(ctx: &webgpu::Context<'_>) -> Self {
         let camera = Camera {
             // position the camera 1 unit up and 2 units back
             // +z is out of the screen
@@ -29,7 +29,7 @@ impl webgpu::App for App {
         };
         let camera_controller = CameraController::new(0.2);
 
-        let renderer = webgpu::Renderer::new(ctx, &camera);
+        let renderer = webgpu::Renderer::new(ctx, &camera).await;
 
         let voxels: Vec<Voxel> = vec![
             Voxel {

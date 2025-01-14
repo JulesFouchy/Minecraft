@@ -4,12 +4,14 @@ pub mod texture;
 pub use crate::webgpu::texture::*;
 pub mod renderer;
 pub use crate::webgpu::renderer::*;
+pub mod model;
+pub use crate::webgpu::model::*;
 
 use std::iter;
 use winit::{event::*, event_loop::EventLoop, window::Window, window::WindowBuilder};
 
 pub trait App {
-    fn new(webgpu_context: &Context) -> Self;
+    async fn new(webgpu_context: &Context) -> Self;
     fn update(&mut self, ctx: &Context);
     fn render(
         &mut self,
@@ -221,7 +223,7 @@ where
     }
 
     let mut webgpu_context = Context::new(&window).await;
-    let mut app = AppT::new(&webgpu_context);
+    let mut app = AppT::new(&webgpu_context).await;
     let mut surface_configured = false;
 
     event_loop
