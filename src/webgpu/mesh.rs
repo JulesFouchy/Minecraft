@@ -23,9 +23,9 @@ impl Vertex {
 }
 
 pub struct Mesh {
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    num_indices: u32,
+    pub vertex_buffer: wgpu::Buffer,
+    pub index_buffer: wgpu::Buffer,
+    pub num_indices: u32,
 }
 
 impl Mesh {
@@ -50,11 +50,5 @@ impl Mesh {
             index_buffer,
             num_indices: indices.len() as u32,
         }
-    }
-
-    pub fn draw(&self, render_pass: &mut wgpu::RenderPass) {
-        render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-        render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
     }
 }
