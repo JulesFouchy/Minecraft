@@ -24,7 +24,7 @@ const VERTICES: &[Vertex] = &[
 #[rustfmt::skip]
 const INDICES: &[u16] = &[
     0, 1, 2, 0, 2, 3, // Front face
-    4, 5, 6, 4, 6, 7, // Back face
+    4, 6, 5, 4, 7, 6, // Back face
     4, 0, 3, 4, 3, 7, // Left face
     1, 5, 6, 1, 6, 2, // Right face
     3, 2, 6, 3, 6, 7, // Top face
