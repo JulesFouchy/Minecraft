@@ -90,29 +90,37 @@ pub async fn load_model(
 
     let mut materials = Vec::new();
     for m in obj_materials? {
-        let diffuse_texture = load_texture(
-            &file_path
-                .parent()
-                .unwrap()
-                .join(Path::new(&m.diffuse_texture)),
-            device,
-            queue,
-        )
-        .await?;
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
-                },
-            ],
-            label: None,
-        });
+        let diffuse_texture = match m.diffuse_texture.as_str() {
+            "" => None,
+            diffuse_texture_path => Some(
+                load_texture(
+                    &file_path
+                        .parent()
+                        .unwrap()
+                        .join(Path::new(diffuse_texture_path)),
+                    device,
+                    queue,
+                )
+                .await?,
+            ),
+        };
+        let bind_group = match &diffuse_texture {
+            None => None,
+            Some(diffuse_texture) => Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
+                    },
+                ],
+                label: None,
+            })),
+        };
 
         materials.push(model::Material {
             name: m.name,

@@ -30,8 +30,8 @@ impl Vertex for ModelVertex {
 
 pub struct Material {
     pub name: String,
-    pub diffuse_texture: Texture,
-    pub bind_group: wgpu::BindGroup,
+    pub diffuse_texture: Option<Texture>,
+    pub bind_group: Option<wgpu::BindGroup>,
 }
 
 pub struct Mesh {
@@ -107,8 +107,10 @@ where
     ) {
         self.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
         self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-        self.set_bind_group(0, &material.bind_group, &[]);
-        self.set_bind_group(1, camera_bind_group, &[]);
+        if material.bind_group.is_some() {
+            self.set_bind_group(0, &material.bind_group, &[]);
+        }
+        self.set_bind_group(0, camera_bind_group, &[]);
         self.draw_indexed(0..mesh.num_elements, 0, instances);
     }
 }
